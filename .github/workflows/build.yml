@@ -34,6 +34,23 @@ jobs:
         if: steps.ndk-cache.outputs.cache-hit != 'true'
         run: echo "y" | sudo /usr/local/lib/android/sdk/tools/bin/sdkmanager --install "ndk;21.1.6352462"
 
+      - name: NDK Build Cache
+        id: build-cache
+        uses: actions/cache@v2
+        with:
+          path: TMessagesProj/build
+          key: ${{ runner.os }}-build-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-build-
+          
+      - name: CXX Build Cache
+        id: cxx-cache
+        uses: actions/cache@v2
+        with:
+          path: TMessagesProj/.cxx
+          key: ${{ runner.os }}-cxx-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cxx-
+
+
       - name: Build the app
         run: ./gradlew assembleAfatDebug
         
