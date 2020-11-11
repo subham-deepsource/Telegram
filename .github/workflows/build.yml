@@ -52,7 +52,7 @@ jobs:
 
 
       - name: Build the app
-        run: ./gradlew assembleAfatDebug
+        run: ./gradlew assembleArm64Debug
         
       - name: Upload APK
         uses: actions/upload-artifact@v1
