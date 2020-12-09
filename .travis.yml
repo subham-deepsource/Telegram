@@ -11,7 +11,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
-    - $HOME/TMessagesProj/.cxx
+    - $HOME/build/RoyalWizard/Telegram/TMessagesProj/.cxx
 
 android:
   components:
