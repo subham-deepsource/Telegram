@@ -6,6 +6,8 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
+        with:
+          clean: false
        
       - name: Gradle cache
         uses: actions/cache@v2
