@@ -54,10 +54,10 @@ jobs:
 
 
       - name: Build the app
-        run: ./gradlew assembleArm64Debug
+        run: ./gradlew assembleArm64Release
         
       - name: Upload APK
         uses: actions/upload-artifact@v1
         with:
           name: app
-          path: TMessagesProj/build/outputs/apk/afat/debug/app.apk
+          path: TMessagesProj/build/outputs/apk/arm64/release/app.apk
