@@ -32,10 +32,6 @@ import java.util.List;
 
 public class ChatListItemAnimator extends DefaultItemAnimator {
 
-    public static final int ANIMATION_TYPE_OUT = 1;
-    public static final int ANIMATION_TYPE_IN = 2;
-    public static final int ANIMATION_TYPE_MOVE = 3;
-
     private final ChatActivity activity;
     private final RecyclerListView recyclerListView;
 
@@ -50,6 +46,8 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
     private boolean shouldAnimateEnterFromBottom;
     private RecyclerView.ViewHolder greetingsSticker;
     private ChatGreetingsView chatGreetingsView;
+
+    private boolean reversePositions;
 
     public ChatListItemAnimator(ChatActivity activity, RecyclerListView listView) {
         this.activity = activity;
@@ -73,8 +71,15 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
         boolean runTranslationFromBottom = false;
         if (shouldAnimateEnterFromBottom) {
             for (int i = 0; i < mPendingAdditions.size(); i++) {
-                if (mPendingAdditions.get(i).getLayoutPosition() == 0) {
-                    runTranslationFromBottom = true;
+                if (reversePositions) {
+                    int itemCount = recyclerListView.getAdapter() == null ? 0 : recyclerListView.getAdapter().getItemCount();
+                    if (mPendingAdditions.get(i).getLayoutPosition() == itemCount - 1) {
+                        runTranslationFromBottom = true;
+                    }
+                } else {
+                    if (mPendingAdditions.get(i).getLayoutPosition() == 0) {
+                        runTranslationFromBottom = true;
+                    }
                 }
             }
         }
@@ -89,7 +94,11 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1f);
         valueAnimator.addUpdateListener(animation -> {
-            activity.onListItemAniamtorTick();
+            if (activity != null) {
+                activity.onListItemAniamtorTick();
+            } else {
+                recyclerListView.invalidate();
+            }
         });
         valueAnimator.setDuration(getRemoveDuration() + getMoveDuration());
         valueAnimator.start();
@@ -226,6 +235,7 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
         if (res && shouldAnimateEnterFromBottom) {
             boolean runTranslationFromBottom = false;
             for (int i = 0; i < mPendingAdditions.size(); i++) {
+
                 if (mPendingAdditions.get(i).getLayoutPosition() == 0) {
                     runTranslationFromBottom = true;
                 }
@@ -598,7 +608,7 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
     }
 
     @Override
-    void animateMoveImpl(RecyclerView.ViewHolder holder, MoveInfo moveInfo) {
+    protected void animateMoveImpl(RecyclerView.ViewHolder holder, MoveInfo moveInfo) {
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("animate move impl");
         }
@@ -618,9 +628,9 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
 
         MoveInfoExtended moveInfoExtended = (MoveInfoExtended) moveInfo;
 
-        if (holder.itemView instanceof BotHelpCell) {
+        if (activity != null && holder.itemView instanceof BotHelpCell) {
             BotHelpCell botCell = (BotHelpCell) holder.itemView ;
-            int top = recyclerListView.getMeasuredHeight() / 2 - botCell.getMeasuredHeight() / 2 + activity.getChatListViewPadding();
+            float top = recyclerListView.getMeasuredHeight() / 2 - botCell.getMeasuredHeight() / 2 + activity.getChatListViewPadding();
             float animateTo = 0;
             if (botCell.getTop() > top) {
                 animateTo = top - botCell.getTop();
@@ -1405,6 +1415,10 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
         greetingsSticker = holder;
         chatGreetingsView = greetingsViewContainer;
         shouldAnimateEnterFromBottom = false;
+    }
+
+    public void setReversePositions(boolean reversePositions) {
+        this.reversePositions = reversePositions;
     }
 
     class MoveInfoExtended extends MoveInfo {

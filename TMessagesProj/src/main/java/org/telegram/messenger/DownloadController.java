@@ -400,7 +400,7 @@ public class DownloadController extends BaseController implements NotificationCe
         if (type == AUTODOWNLOAD_TYPE_PHOTO) {
             return PRESET_SIZE_NUM_PHOTO;
         } else if (type == AUTODOWNLOAD_TYPE_AUDIO) {
-            return PRESET_SIZE_NUM_AUDIO;
+            return PRESET_SIZE_NUM_DOCUMENT;
         } else if (type == AUTODOWNLOAD_TYPE_VIDEO) {
             return PRESET_SIZE_NUM_VIDEO;
         } else if (type == AUTODOWNLOAD_TYPE_DOCUMENT) {
@@ -629,7 +629,8 @@ public class DownloadController extends BaseController implements NotificationCe
                     index = 2;
                 }
             } else {
-                if (MessageObject.isMegagroup(message)) {
+                TLRPC.Chat chat = message.peer_id != null && message.peer_id.channel_id != 0 ? getMessagesController().getChat(message.peer_id.channel_id) : null;
+                if (ChatObject.isChannel(chat) && chat.megagroup) {
                     if (message.from_id instanceof TLRPC.TL_peerUser && getContactsController().contactsDict.containsKey(message.from_id.user_id)) {
                         index = 0;
                     } else {
@@ -662,7 +663,12 @@ public class DownloadController extends BaseController implements NotificationCe
             preset = getCurrentMobilePreset();
         }
         int mask = preset.mask[index];
-        int maxSize = preset.sizes[typeToIndex(type)];
+        int maxSize;
+        if (type == AUTODOWNLOAD_TYPE_AUDIO) {
+            maxSize = Math.max(512 * 1024, preset.sizes[typeToIndex(type)]);
+        } else {
+            maxSize = preset.sizes[typeToIndex(type)];
+        }
         int size = MessageObject.getMessageSize(message);
         if (isVideo && preset.preloadVideo && size > maxSize && maxSize > 2 * 1024 * 1024) {
             return (mask & type) != 0 ? 2 : 0;

@@ -8,6 +8,7 @@
 
 package org.telegram.ui.ActionBar;
 
+import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.Dialog;
@@ -30,10 +31,10 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
-import org.telegram.messenger.MediaController;
-import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocationController;
+import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
@@ -46,7 +47,7 @@ import org.telegram.ui.Components.LayoutHelper;
 
 import java.util.ArrayList;
 
-public class BaseFragment {
+public abstract class BaseFragment {
 
     private boolean isFinished;
     private boolean finishing;
@@ -327,6 +328,10 @@ public class BaseFragment {
 
     }
 
+    public boolean isLastFragment() {
+        return parentLayout != null && !parentLayout.fragmentsStack.isEmpty() && parentLayout.fragmentsStack.get(parentLayout.fragmentsStack.size() - 1) == this;
+    }
+
     public ActionBarLayout getParentLayout() {
         return parentLayout;
     }
@@ -409,6 +414,10 @@ public class BaseFragment {
         if (actionBar != null) {
             actionBar.onPause();
         }
+    }
+
+    protected void onSlideProgress(boolean isOpen, float progress) {
+
     }
 
     protected void onTransitionAnimationProgress(boolean isOpen, float progress) {
@@ -592,5 +601,21 @@ public class BaseFragment {
         if (parentLayout != null) {
             parentLayout.setFragmentPanTranslationOffset(offset);
         }
+    }
+
+    public void saveKeyboardPositionBeforeTransition() {
+
+    }
+
+    protected Animator getCustomSlideTransition(boolean topFragment, boolean backAnimation, float distanceToMove) {
+        return null;
+    }
+
+    protected void prepareFragmentToSlide(boolean topFragment, boolean beginSlide) {
+
+    }
+
+    public void setProgressToDrawerOpened(float v) {
+
     }
 }

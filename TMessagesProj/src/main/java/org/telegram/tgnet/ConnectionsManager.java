@@ -11,14 +11,12 @@ import android.text.TextUtils;
 import android.util.Base64;
 
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BaseController;
-import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.EmuDetector;
@@ -83,6 +81,10 @@ public class ConnectionsManager extends BaseController {
     public final static int ConnectionStateConnected = 3;
     public final static int ConnectionStateConnectingToProxy = 4;
     public final static int ConnectionStateUpdating = 5;
+
+    public final static byte USE_IPV4_ONLY = 0;
+    public final static byte USE_IPV6_ONLY = 1;
+    public final static byte USE_IPV4_IPV6_RANDOM = 2;
 
     private static long lastDnsRequestTime;
 
@@ -240,18 +242,26 @@ public class ConnectionsManager extends BaseController {
     }
 
     public int sendRequest(TLObject object, RequestDelegate completionBlock, int flags) {
-        return sendRequest(object, completionBlock, null, null, flags, DEFAULT_DATACENTER_ID, ConnectionTypeGeneric, true);
+        return sendRequest(object, completionBlock, null, null, null, flags, DEFAULT_DATACENTER_ID, ConnectionTypeGeneric, true);
     }
 
     public int sendRequest(TLObject object, RequestDelegate completionBlock, int flags, int connetionType) {
-        return sendRequest(object, completionBlock, null, null, flags, DEFAULT_DATACENTER_ID, connetionType, true);
+        return sendRequest(object, completionBlock, null, null, null, flags, DEFAULT_DATACENTER_ID, connetionType, true);
+    }
+
+    public int sendRequest(TLObject object, RequestDelegateTimestamp completionBlock, int flags, int connetionType, int datacenterId) {
+        return sendRequest(object, null, completionBlock, null, null, flags, datacenterId, connetionType, true);
     }
 
     public int sendRequest(TLObject object, RequestDelegate completionBlock, QuickAckDelegate quickAckBlock, int flags) {
-        return sendRequest(object, completionBlock, quickAckBlock, null, flags, DEFAULT_DATACENTER_ID, ConnectionTypeGeneric, true);
+        return sendRequest(object, completionBlock, null, quickAckBlock, null, flags, DEFAULT_DATACENTER_ID, ConnectionTypeGeneric, true);
     }
 
     public int sendRequest(final TLObject object, final RequestDelegate onComplete, final QuickAckDelegate onQuickAck, final WriteToSocketDelegate onWriteToSocket, final int flags, final int datacenterId, final int connetionType, final boolean immediate) {
+        return sendRequest(object, onComplete, null, onQuickAck, onWriteToSocket, flags, datacenterId, connetionType, immediate);
+    }
+
+    public int sendRequest(final TLObject object, final RequestDelegate onComplete, final RequestDelegateTimestamp onCompleteTimestamp, final QuickAckDelegate onQuickAck, final WriteToSocketDelegate onWriteToSocket, final int flags, final int datacenterId, final int connetionType, final boolean immediate) {
         final int requestToken = lastRequestToken.getAndIncrement();
         Utilities.stageQueue.postRunnable(() -> {
             if (BuildVars.LOGS_ENABLED) {
@@ -262,7 +272,7 @@ public class ConnectionsManager extends BaseController {
                 object.serializeToStream(buffer);
                 object.freeResources();
 
-                native_sendRequest(currentAccount, buffer.address, (response, errorCode, errorText, networkType) -> {
+                native_sendRequest(currentAccount, buffer.address, (response, errorCode, errorText, networkType, timestamp) -> {
                     try {
                         TLObject resp = null;
                         TLRPC.TL_error error = null;
@@ -287,7 +297,11 @@ public class ConnectionsManager extends BaseController {
                         final TLObject finalResponse = resp;
                         final TLRPC.TL_error finalError = error;
                         Utilities.stageQueue.postRunnable(() -> {
-                            onComplete.run(finalResponse, finalError);
+                            if (onComplete != null) {
+                                onComplete.run(finalResponse, finalError);
+                            } else if (onCompleteTimestamp != null) {
+                                onCompleteTimestamp.run(finalResponse, finalError, timestamp);
+                            }
                             if (finalResponse != null) {
                                 finalResponse.freeResources();
                             }
@@ -335,7 +349,7 @@ public class ConnectionsManager extends BaseController {
     }
 
     public void checkConnection() {
-        native_setUseIpv6(currentAccount, useIpv6Address());
+        native_setIpStrategy(currentAccount, getIpStrategy());
         native_setNetworkAvailable(currentAccount, ApplicationLoader.isNetworkOnline(), ApplicationLoader.getCurrentNetworkType(), ApplicationLoader.isConnectionSlow());
     }
 
@@ -362,8 +376,17 @@ public class ConnectionsManager extends BaseController {
         if (installer == null) {
             installer = "";
         }
+        String packageId = "";
+        try {
+            packageId = ApplicationLoader.applicationContext.getPackageName();
+        } catch (Throwable ignore) {
 
-        native_init(currentAccount, version, layer, apiId, deviceModel, systemVersion, appVersion, langCode, systemLangCode, configPath, logPath, regId, cFingerprint, installer, timezoneOffset, userId, enablePushConnection, ApplicationLoader.isNetworkOnline(), ApplicationLoader.getCurrentNetworkType());
+        }
+        if (packageId == null) {
+            packageId = "";
+        }
+
+        native_init(currentAccount, version, layer, apiId, deviceModel, systemVersion, appVersion, langCode, systemLangCode, configPath, logPath, regId, cFingerprint, installer, packageId, timezoneOffset, userId, enablePushConnection, ApplicationLoader.isNetworkOnline(), ApplicationLoader.getCurrentNetworkType());
         checkConnection();
     }
 
@@ -658,7 +681,7 @@ public class ConnectionsManager extends BaseController {
     public static native void native_switchBackend(int currentAccount);
     public static native int native_isTestBackend(int currentAccount);
     public static native void native_pauseNetwork(int currentAccount);
-    public static native void native_setUseIpv6(int currentAccount, boolean value);
+    public static native void native_setIpStrategy(int currentAccount, byte value);
     public static native void native_updateDcSettings(int currentAccount);
     public static native void native_setNetworkAvailable(int currentAccount, boolean value, int networkType, boolean slow);
     public static native void native_resumeNetwork(int currentAccount, boolean partial);
@@ -674,7 +697,7 @@ public class ConnectionsManager extends BaseController {
     public static native void native_applyDatacenterAddress(int currentAccount, int datacenterId, String ipAddress, int port);
     public static native int native_getConnectionState(int currentAccount);
     public static native void native_setUserId(int currentAccount, int id);
-    public static native void native_init(int currentAccount, int version, int layer, int apiId, String deviceModel, String systemVersion, String appVersion, String langCode, String systemLangCode, String configPath, String logPath, String regId, String cFingerprint, String installer, int timezoneOffset, int userId, boolean enablePushConnection, boolean hasNetwork, int networkType);
+    public static native void native_init(int currentAccount, int version, int layer, int apiId, String deviceModel, String systemVersion, String appVersion, String langCode, String systemLangCode, String configPath, String logPath, String regId, String cFingerprint, String installer, String packageId, int timezoneOffset, int userId, boolean enablePushConnection, boolean hasNetwork, int networkType);
     public static native void native_setProxySettings(int currentAccount, String address, int port, String username, String password, String secret);
     public static native void native_setLangCode(int currentAccount, String langCode);
     public static native void native_setRegId(int currentAccount, String regId);
@@ -703,9 +726,9 @@ public class ConnectionsManager extends BaseController {
     }
 
     @SuppressLint("NewApi")
-    protected static boolean useIpv6Address() {
+    protected static byte getIpStrategy() {
         if (Build.VERSION.SDK_INT < 19) {
-            return false;
+            return USE_IPV4_ONLY;
         }
         if (BuildVars.LOGS_ENABLED) {
             try {
@@ -743,6 +766,7 @@ public class ConnectionsManager extends BaseController {
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             boolean hasIpv4 = false;
             boolean hasIpv6 = false;
+            boolean hasStrangeIpv4 = false;
             while (networkInterfaces.hasMoreElements()) {
                 networkInterface = networkInterfaces.nextElement();
                 if (!networkInterface.isUp() || networkInterface.isLoopback()) {
@@ -761,18 +785,25 @@ public class ConnectionsManager extends BaseController {
                         String addrr = inetAddress.getHostAddress();
                         if (!addrr.startsWith("192.0.0.")) {
                             hasIpv4 = true;
+                        } else {
+                            hasStrangeIpv4 = true;
                         }
                     }
                 }
             }
-            if (!hasIpv4 && hasIpv6) {
-                return true;
+            if (hasIpv6) {
+                if (hasStrangeIpv4) {
+                    return USE_IPV4_IPV6_RANDOM;
+                }
+                if (!hasIpv4) {
+                    return USE_IPV6_ONLY;
+                }
             }
         } catch (Throwable e) {
             FileLog.e(e);
         }
 
-        return false;
+        return USE_IPV4_ONLY;
     }
 
     private static class ResolveHostByNameTask extends AsyncTask<Void, Void, ResolvedDomain> {
@@ -1258,8 +1289,6 @@ public class ConnectionsManager extends BaseController {
                     throw new Exception("test backend");
                 }
                 firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-                FirebaseRemoteConfigSettings configSettings = new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG).build();
-                firebaseRemoteConfig.setConfigSettings(configSettings);
                 String currentValue = firebaseRemoteConfig.getString("ipconfigv3");
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("current firebase value = " + currentValue);
@@ -1268,30 +1297,30 @@ public class ConnectionsManager extends BaseController {
                 firebaseRemoteConfig.fetch(0).addOnCompleteListener(finishedTask -> {
                     final boolean success = finishedTask.isSuccessful();
                     Utilities.stageQueue.postRunnable(() -> {
-                        currentTask = null;
-                        String config = null;
                         if (success) {
-                            firebaseRemoteConfig.activateFetched();
-                            config = firebaseRemoteConfig.getString("ipconfigv3");
-                        }
-                        if (!TextUtils.isEmpty(config)) {
-                            byte[] bytes = Base64.decode(config, Base64.DEFAULT);
-                            try {
-                                NativeByteBuffer buffer = new NativeByteBuffer(bytes.length);
-                                buffer.writeBytes(bytes);
-                                int date = (int) (firebaseRemoteConfig.getInfo().getFetchTimeMillis() / 1000);
-                                native_applyDnsConfig(currentAccount, buffer.address, AccountInstance.getInstance(currentAccount).getUserConfig().getClientPhone(), date);
-                            } catch (Exception e) {
-                                FileLog.e(e);
-                            }
-                        } else {
-                            if (BuildVars.LOGS_ENABLED) {
-                                FileLog.d("failed to get firebase result");
-                                FileLog.d("start dns txt task");
-                            }
-                            DnsTxtLoadTask task = new DnsTxtLoadTask(currentAccount);
-                            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
-                            currentTask = task;
+                            firebaseRemoteConfig.activate().addOnCompleteListener(finishedTask2 -> {
+                                currentTask = null;
+                                String config = firebaseRemoteConfig.getString("ipconfigv3");
+                                if (!TextUtils.isEmpty(config)) {
+                                    byte[] bytes = Base64.decode(config, Base64.DEFAULT);
+                                    try {
+                                        NativeByteBuffer buffer = new NativeByteBuffer(bytes.length);
+                                        buffer.writeBytes(bytes);
+                                        int date = (int) (firebaseRemoteConfig.getInfo().getFetchTimeMillis() / 1000);
+                                        native_applyDnsConfig(currentAccount, buffer.address, AccountInstance.getInstance(currentAccount).getUserConfig().getClientPhone(), date);
+                                    } catch (Exception e) {
+                                        FileLog.e(e);
+                                    }
+                                } else {
+                                    if (BuildVars.LOGS_ENABLED) {
+                                        FileLog.d("failed to get firebase result");
+                                        FileLog.d("start dns txt task");
+                                    }
+                                    DnsTxtLoadTask task = new DnsTxtLoadTask(currentAccount);
+                                    task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
+                                    currentTask = task;
+                                }
+                            });
                         }
                     });
                 });

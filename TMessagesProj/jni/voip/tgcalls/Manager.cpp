@@ -1,37 +1,19 @@
 #include "Manager.h"
 
 #include "rtc_base/byte_buffer.h"
+#include "StaticThreads.h"
 
 #include <fstream>
 
 namespace tgcalls {
 namespace {
 
-rtc::Thread *makeNetworkThread() {
-	static std::unique_ptr<rtc::Thread> value = rtc::Thread::CreateWithSocketServer();
-	value->SetName("WebRTC-Network", nullptr);
-	value->Start();
-	return value.get();
-}
-
-rtc::Thread *getNetworkThread() {
-	static rtc::Thread *value = makeNetworkThread();
-	return value;
-}
-
-rtc::Thread *makeMediaThread() {
-	static std::unique_ptr<rtc::Thread> value = rtc::Thread::Create();
-	value->SetName("WebRTC-Media", nullptr);
-	value->Start();
-	return value.get();
-}
-
 void dumpStatsLog(const FilePath &path, const CallStats &stats) {
-	if (path.empty()) {
+	if (path.data.empty()) {
 		return;
 	}
     std::ofstream file;
-    file.open(path);
+    file.open(path.data);
 
     file << "{";
     file << "\"v\":\"" << 1 << "\"";
@@ -94,11 +76,6 @@ bool Manager::ResolvedNetworkStatus::operator!=(const ResolvedNetworkStatus &rhs
     return !(*this == rhs);
 }
 
-rtc::Thread *Manager::getMediaThread() {
-	static rtc::Thread *value = makeMediaThread();
-	return value;
-}
-
 Manager::Manager(rtc::Thread *thread, Descriptor &&descriptor) :
 _thread(thread),
 _encryptionKey(descriptor.encryptionKey),
@@ -112,6 +89,7 @@ _enableStunMarking(descriptor.config.enableStunMarking),
 _protocolVersion(descriptor.config.protocolVersion),
 _statsLogPath(descriptor.config.statsLogPath),
 _rtcServers(std::move(descriptor.rtcServers)),
+_proxy(std::move(descriptor.proxy)),
 _mediaDevicesConfig(std::move(descriptor.mediaDevicesConfig)),
 _videoCapture(std::move(descriptor.videoCapture)),
 _stateUpdated(std::move(descriptor.stateUpdated)),
@@ -120,6 +98,8 @@ _remoteBatteryLevelIsLowUpdated(std::move(descriptor.remoteBatteryLevelIsLowUpda
 _remotePrefferedAspectRatioUpdated(std::move(descriptor.remotePrefferedAspectRatioUpdated)),
 _signalingDataEmitted(std::move(descriptor.signalingDataEmitted)),
 _signalBarsUpdated(std::move(descriptor.signalBarsUpdated)),
+_audioLevelUpdated(std::move(descriptor.audioLevelUpdated)),
+_createAudioDeviceModule(std::move(descriptor.createAudioDeviceModule)),
 _enableHighBitrateVideo(descriptor.config.enableHighBitrateVideo),
 _dataSaving(descriptor.config.dataSaving),
 _platformContext(descriptor.platformContext) {
@@ -177,14 +157,15 @@ void Manager::start() {
 			strong->_sendSignalingMessage(std::move(message));
 		});
 	};
-	_networkManager.reset(new ThreadLocalObject<NetworkManager>(getNetworkThread(), [weak, thread, sendSignalingMessage, encryptionKey = _encryptionKey, enableP2P = _enableP2P, enableTCP = _enableTCP, enableStunMarking = _enableStunMarking, rtcServers = _rtcServers] {
+	_networkManager.reset(new ThreadLocalObject<NetworkManager>(StaticThreads::getNetworkThread(), [weak, thread, sendSignalingMessage, encryptionKey = _encryptionKey, enableP2P = _enableP2P, enableTCP = _enableTCP, enableStunMarking = _enableStunMarking, rtcServers = _rtcServers, proxy = std::move(_proxy)] () mutable {
 		return new NetworkManager(
-			getNetworkThread(),
+            StaticThreads::getNetworkThread(),
 			encryptionKey,
 			enableP2P,
             enableTCP,
             enableStunMarking,
 			rtcServers,
+			std::move(proxy),
 			[=](const NetworkManager::State &state) {
 				thread->PostTask(RTC_FROM_HERE, [=] {
 					const auto strong = weak.lock();
@@ -242,9 +223,9 @@ void Manager::start() {
 			});
 	}));
 	bool isOutgoing = _encryptionKey.isOutgoing;
-	_mediaManager.reset(new ThreadLocalObject<MediaManager>(getMediaThread(), [weak, isOutgoing, protocolVersion = _protocolVersion, thread, sendSignalingMessage, videoCapture = _videoCapture, mediaDevicesConfig = _mediaDevicesConfig, enableHighBitrateVideo = _enableHighBitrateVideo, signalBarsUpdated = _signalBarsUpdated, preferredCodecs = _preferredCodecs, platformContext = _platformContext]() {
+	_mediaManager.reset(new ThreadLocalObject<MediaManager>(StaticThreads::getMediaThread(), [weak, isOutgoing, protocolVersion = _protocolVersion, thread, sendSignalingMessage, videoCapture = _videoCapture, mediaDevicesConfig = _mediaDevicesConfig, enableHighBitrateVideo = _enableHighBitrateVideo, signalBarsUpdated = _signalBarsUpdated, audioLevelUpdated = _audioLevelUpdated, preferredCodecs = _preferredCodecs, createAudioDeviceModule = _createAudioDeviceModule, platformContext = _platformContext]() {
 		return new MediaManager(
-			getMediaThread(),
+            StaticThreads::getMediaThread(),
 			isOutgoing,
             protocolVersion,
 			mediaDevicesConfig,
@@ -260,9 +241,11 @@ void Manager::start() {
 				});
 			},
             signalBarsUpdated,
-            enableHighBitrateVideo,
+            audioLevelUpdated,
+			createAudioDeviceModule,
+			enableHighBitrateVideo,
             preferredCodecs,
-			platformContext);
+            platformContext);
 	}));
     _networkManager->perform(RTC_FROM_HERE, [](NetworkManager *networkManager) {
         networkManager->start();

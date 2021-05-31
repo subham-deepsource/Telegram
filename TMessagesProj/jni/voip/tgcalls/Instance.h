@@ -12,10 +12,14 @@
 namespace rtc {
 template <typename VideoFrameT>
 class VideoSinkInterface;
+template <class T>
+class scoped_refptr;
 } // namespace rtc
 
 namespace webrtc {
 class VideoFrame;
+class AudioDeviceModule;
+class TaskQueueFactory;
 } // namespace webrtc
 
 namespace tgcalls {
@@ -23,11 +27,13 @@ namespace tgcalls {
 class VideoCaptureInterface;
 class PlatformContext;
 
+struct FilePath {
 #ifndef _WIN32
-using FilePath = std::string;
+	std::string data;
 #else
-using FilePath = std::wstring;
+	std::wstring data;
 #endif
+};
 
 struct Proxy {
 	std::string host;
@@ -217,11 +223,14 @@ struct Descriptor {
 	std::shared_ptr<VideoCaptureInterface> videoCapture;
 	std::function<void(State)> stateUpdated;
 	std::function<void(int)> signalBarsUpdated;
+    std::function<void(float)> audioLevelUpdated;
     std::function<void(bool)> remoteBatteryLevelIsLowUpdated;
 	std::function<void(AudioState, VideoState)> remoteMediaStateUpdated;
     std::function<void(float)> remotePrefferedAspectRatioUpdated;
 	std::function<void(const std::vector<uint8_t> &)> signalingDataEmitted;
-    std::shared_ptr<PlatformContext> platformContext;
+	std::function<rtc::scoped_refptr<webrtc::AudioDeviceModule>(webrtc::TaskQueueFactory*)> createAudioDeviceModule;
+
+	std::shared_ptr<PlatformContext> platformContext;
 };
 
 class Meta {

@@ -11,6 +11,7 @@ ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavformat.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavcodec.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavresample.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavutil.a,
+${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libswresample.a,
 ${CMAKE_HOME_DIRECTORY}/boringssl/lib/libssl_${ANDROID_ABI}.a,
 ${CMAKE_HOME_DIRECTORY}/boringssl/lib/libcrypto_${ANDROID_ABI}.a")
 
@@ -31,6 +32,9 @@ set_target_properties(avcodec PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTOR
 
 add_library(avresample STATIC IMPORTED)
 set_target_properties(avresample PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavresample.a)
+
+add_library(swresample STATIC IMPORTED)
+set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libswresample.a)
 
 add_library(swscale STATIC IMPORTED)
 set_target_properties(swscale PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libswscale.a)
@@ -395,7 +399,7 @@ target_compile_definitions(sqlite PUBLIC
 #voip
 include(${CMAKE_HOME_DIRECTORY}/voip/CMakeLists.txt)
 
-set(NATIVE_LIB "tmessages.34")
+set(NATIVE_LIB "tmessages.38")
 
 #tmessages
 add_library(${NATIVE_LIB} SHARED
@@ -642,7 +646,8 @@ target_sources(${NATIVE_LIB} PRIVATE
         third_party/libyuv/source/scale_neon64.cc
         third_party/libyuv/source/scale_win.cc
         third_party/libyuv/source/scale.cc
-        third_party/libyuv/source/video_common.cc)
+        third_party/libyuv/source/video_common.cc
+        third_party/libyuv/source/scale_uv.cc)
 
 target_include_directories(${NATIVE_LIB} PUBLIC
         opus/include
@@ -679,6 +684,7 @@ target_link_libraries(${NATIVE_LIB}
         avformat
         avcodec
         avresample
+        swresample
         avutil
         ssl
         crypto

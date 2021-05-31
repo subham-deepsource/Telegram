@@ -83,6 +83,7 @@ import org.telegram.ui.Cells.ThemesHorizontalListCell;
 import org.telegram.ui.Components.AudioVisualizerDrawable;
 import org.telegram.ui.Components.BackgroundGradientDrawable;
 import org.telegram.ui.Components.CombinedDrawable;
+import org.telegram.ui.Components.FragmentContextViewWavesDrawable;
 import org.telegram.ui.Components.MsgClockDrawable;
 import org.telegram.ui.Components.PathAnimator;
 import org.telegram.ui.Components.PlayingGameDrawable;
@@ -92,7 +93,7 @@ import org.telegram.ui.Components.RoundStatusDrawable;
 import org.telegram.ui.Components.ScamDrawable;
 import org.telegram.ui.Components.SendingFileDrawable;
 import org.telegram.ui.Components.StatusDrawable;
-import org.telegram.ui.Components.SvgHelper;
+import org.telegram.messenger.SvgHelper;
 import org.telegram.ui.Components.ThemeEditorView;
 import org.telegram.ui.Components.TypingDotsDrawable;
 
@@ -1973,6 +1974,7 @@ public class Theme {
     private static boolean isPatternWallpaper;
 
     public static Paint dividerPaint;
+    public static Paint dividerExtraPaint;
     public static Paint linkSelectionPaint;
     public static Paint checkboxSquare_eraserPaint;
     public static Paint checkboxSquare_checkPaint;
@@ -2001,6 +2003,7 @@ public class Theme {
     public static TextPaint dialogs_timePaint;
     public static TextPaint dialogs_countTextPaint;
     public static TextPaint dialogs_archiveTextPaint;
+    public static TextPaint dialogs_archiveTextPaintSmall;
     public static TextPaint dialogs_onlinePaint;
     public static TextPaint dialogs_offlinePaint;
     public static Drawable dialogs_checkDrawable;
@@ -2017,6 +2020,7 @@ public class Theme {
     public static Drawable dialogs_muteDrawable;
     public static Drawable dialogs_verifiedDrawable;
     public static ScamDrawable dialogs_scamDrawable;
+    public static ScamDrawable dialogs_fakeDrawable;
     public static Drawable dialogs_verifiedCheckDrawable;
     public static Drawable dialogs_pinnedDrawable;
     public static Drawable dialogs_mentionDrawable;
@@ -2034,6 +2038,14 @@ public class Theme {
     private static int dialogs_holidayDrawableOffsetY;
     private static long lastHolidayCheckTime;
     private static boolean canStartHolidayAnimation;
+
+    public static RLottieDrawable dialogs_swipeMuteDrawable;
+    public static RLottieDrawable dialogs_swipeUnmuteDrawable;
+    public static RLottieDrawable dialogs_swipeDeleteDrawable;
+    public static RLottieDrawable dialogs_swipeReadDrawable;
+    public static RLottieDrawable dialogs_swipeUnreadDrawable;
+    public static RLottieDrawable dialogs_swipePinDrawable;
+    public static RLottieDrawable dialogs_swipeUnpinDrawable;
 
     public static TextPaint profile_aboutTextPaint;
     public static Drawable profile_verifiedDrawable;
@@ -2160,6 +2172,7 @@ public class Theme {
     public static Drawable chat_replyIconDrawable;
     public static Drawable chat_goIconDrawable;
     public static Drawable chat_botLinkDrawalbe;
+    public static Drawable chat_botCardDrawalbe;
     public static Drawable chat_botInlineDrawable;
     public static Drawable chat_systemDrawable;
     public static Drawable chat_commentDrawable;
@@ -2252,6 +2265,7 @@ public class Theme {
     public static final String key_dialogShadowLine = "dialogShadowLine";
     public static final String key_dialogEmptyImage = "dialogEmptyImage";
     public static final String key_dialogEmptyText = "dialogEmptyText";
+    public static final String key_dialogSwipeRemove = "dialogSwipeRemove";
 
     public static final String key_windowBackgroundWhite = "windowBackgroundWhite";
     public static final String key_windowBackgroundUnchecked = "windowBackgroundUnchecked";
@@ -2330,6 +2344,7 @@ public class Theme {
     public static final String key_inappPlayerClose = "inappPlayerClose";
 
     public static final String key_returnToCallBackground = "returnToCallBackground";
+    public static final String key_returnToCallMutedBackground = "returnToCallMutedBackground";
     public static final String key_returnToCallText = "returnToCallText";
 
     public static final String key_contextProgressInner1 = "contextProgressInner1";
@@ -2765,6 +2780,70 @@ public class Theme {
     public static final String key_chat_recordedVoiceHighlight = "key_chat_recordedVoiceHighlight";
     public static final String key_chat_TextSelectionCursor = "chat_TextSelectionCursor";
 
+    public static final String key_voipgroup_listSelector = "voipgroup_listSelector";
+    public static final String key_voipgroup_inviteMembersBackground = "voipgroup_inviteMembersBackground";
+    public static final String key_voipgroup_actionBar = "voipgroup_actionBar";
+    public static final String key_voipgroup_emptyView = "voipgroup_emptyView";
+    public static final String key_voipgroup_actionBarItems = "voipgroup_actionBarItems";
+    public static final String key_voipgroup_actionBarSubtitle = "voipgroup_actionBarSubtitle";
+    public static final String key_voipgroup_actionBarItemsSelector = "voipgroup_actionBarItemsSelector";
+    public static final String key_voipgroup_actionBarUnscrolled = "voipgroup_actionBarUnscrolled";
+    public static final String key_voipgroup_listViewBackgroundUnscrolled = "voipgroup_listViewBackgroundUnscrolled";
+    public static final String key_voipgroup_lastSeenTextUnscrolled = "voipgroup_lastSeenTextUnscrolled";
+    public static final String key_voipgroup_mutedIconUnscrolled = "voipgroup_mutedIconUnscrolled";
+    public static final String key_voipgroup_nameText = "voipgroup_nameText";
+    public static final String key_voipgroup_lastSeenText = "voipgroup_lastSeenText";
+    public static final String key_voipgroup_listeningText = "voipgroup_listeningText";
+    public static final String key_voipgroup_speakingText = "voipgroup_speakingText";
+    public static final String key_voipgroup_mutedIcon = "voipgroup_mutedIcon";
+    public static final String key_voipgroup_mutedByAdminIcon = "voipgroup_mutedByAdminIcon";
+    public static final String key_voipgroup_listViewBackground = "voipgroup_listViewBackground";
+    public static final String key_voipgroup_dialogBackground = "voipgroup_dialogBackground";
+    public static final String key_voipgroup_leaveCallMenu = "voipgroup_leaveCallMenu";
+    public static final String key_voipgroup_checkMenu = "voipgroup_checkMenu";
+    public static final String key_voipgroup_soundButton = "voipgroup_soundButton";
+    public static final String key_voipgroup_soundButtonActive = "voipgroup_soundButtonActive";
+    public static final String key_voipgroup_soundButtonActiveScrolled = "voipgroup_soundButtonActiveScrolled";
+    public static final String key_voipgroup_soundButton2 = "voipgroup_soundButton2";
+    public static final String key_voipgroup_soundButtonActive2 = "voipgroup_soundButtonActive2";
+    public static final String key_voipgroup_soundButtonActive2Scrolled = "voipgroup_soundButtonActive2Scrolled";
+    public static final String key_voipgroup_leaveButton = "voipgroup_leaveButton";
+    public static final String key_voipgroup_leaveButtonScrolled = "voipgroup_leaveButtonScrolled";
+    public static final String key_voipgroup_muteButton = "voipgroup_muteButton";
+    public static final String key_voipgroup_muteButton2 = "voipgroup_muteButton2";
+    public static final String key_voipgroup_muteButton3 = "voipgroup_muteButton3";
+    public static final String key_voipgroup_unmuteButton = "voipgroup_unmuteButton";
+    public static final String key_voipgroup_unmuteButton2 = "voipgroup_unmuteButton2";
+    public static final String key_voipgroup_disabledButton = "voipgroup_disabledButton";
+    public static final String key_voipgroup_disabledButtonActive = "voipgroup_disabledButtonActive";
+    public static final String key_voipgroup_disabledButtonActiveScrolled = "voipgroup_disabledButtonActiveScrolled";
+    public static final String key_voipgroup_connectingProgress = "voipgroup_connectingProgress";
+    public static final String key_voipgroup_blueText = "voipgroup_blueText";
+    public static final String key_voipgroup_scrollUp = "voipgroup_scrollUp";
+    public static final String key_voipgroup_searchPlaceholder = "voipgroup_searchPlaceholder";
+    public static final String key_voipgroup_searchBackground = "voipgroup_searchBackground";
+    public static final String key_voipgroup_searchText = "voipgroup_searchText";
+    public static final String key_voipgroup_overlayGreen1 = "voipgroup_overlayGreen1";
+    public static final String key_voipgroup_overlayGreen2 = "voipgroup_overlayGreen2";
+    public static final String key_voipgroup_overlayBlue1 = "voipgroup_overlayBlue1";
+    public static final String key_voipgroup_overlayBlue2 = "voipgroup_overlayBlue2";
+    public static final String key_voipgroup_topPanelGreen1 = "voipgroup_topPanelGreen1";
+    public static final String key_voipgroup_topPanelGreen2 = "voipgroup_topPanelGreen2";
+    public static final String key_voipgroup_topPanelBlue1 = "voipgroup_topPanelBlue1";
+    public static final String key_voipgroup_topPanelBlue2 = "voipgroup_topPanelBlue2";
+    public static final String key_voipgroup_topPanelGray = "voipgroup_topPanelGray";
+    public static final String key_voipgroup_overlayAlertGradientMuted = "voipgroup_overlayAlertGradientMuted";
+    public static final String key_voipgroup_overlayAlertGradientMuted2 = "voipgroup_overlayAlertGradientMuted2";
+    public static final String key_voipgroup_overlayAlertGradientUnmuted = "voipgroup_overlayAlertGradientUnmuted";
+    public static final String key_voipgroup_overlayAlertGradientUnmuted2 = "voipgroup_overlayAlertGradientUnmuted2";
+    public static final String key_voipgroup_overlayAlertMutedByAdmin = "voipgroup_overlayAlertMutedByAdmin";
+    public static final String key_voipgroup_overlayAlertMutedByAdmin2 = "kvoipgroup_overlayAlertMutedByAdmin2";
+    public static final String key_voipgroup_mutedByAdminGradient = "voipgroup_mutedByAdminGradient";
+    public static final String key_voipgroup_mutedByAdminGradient2 = "voipgroup_mutedByAdminGradient2";
+    public static final String key_voipgroup_mutedByAdminGradient3 = "voipgroup_mutedByAdminGradient3";
+    public static final String key_voipgroup_mutedByAdminMuteButton = "voipgroup_mutedByAdminMuteButton";
+    public static final String key_voipgroup_mutedByAdminMuteButtonDisabled = "voipgroup_mutedByAdminMuteButtonDisabled";
+
     public static final String key_passport_authorizeBackground = "passport_authorizeBackground";
     public static final String key_passport_authorizeBackgroundSelected = "passport_authorizeBackgroundSelected";
     public static final String key_passport_authorizeText = "passport_authorizeText";
@@ -2988,6 +3067,7 @@ public class Theme {
         defaultColors.put(key_dialogShadowLine, 0x12000000);
         defaultColors.put(key_dialogEmptyImage, 0xff9fa4a8);
         defaultColors.put(key_dialogEmptyText, 0xff8c9094);
+        defaultColors.put(key_dialogSwipeRemove, 0xffe56555);
 
         defaultColors.put(key_windowBackgroundWhite, 0xffffffff);
         defaultColors.put(key_windowBackgroundUnchecked, 0xff9da7b1);
@@ -3547,6 +3627,7 @@ public class Theme {
         defaultColors.put(key_inappPlayerClose, 0xff8b969b);
 
         defaultColors.put(key_returnToCallBackground, 0xff44a1e3);
+        defaultColors.put(key_returnToCallMutedBackground, 0xff9DA7B1);
         defaultColors.put(key_returnToCallText, 0xffffffff);
 
         defaultColors.put(key_sharedMedia_startStopLoadIcon, 0xff36a2ee);
@@ -3643,6 +3724,72 @@ public class Theme {
         defaultColors.put(key_statisticChartLine_indigo, 0xff7F79F3);
         defaultColors.put(key_statisticChartLineEmpty, 0xFFEEEEEE);
         defaultColors.put(key_actionBarTipBackground, 0xFF446F94);
+
+        defaultColors.put(key_voipgroup_checkMenu, 0xff6BB6F9);
+        defaultColors.put(key_voipgroup_muteButton, 0xff77E55C);
+        defaultColors.put(key_voipgroup_muteButton2, 0xff7DDCAA);
+        defaultColors.put(key_voipgroup_muteButton3, 0xff56C7FE);
+        defaultColors.put(key_voipgroup_searchText, 0xffffffff);
+        defaultColors.put(key_voipgroup_searchPlaceholder, 0xff858D94);
+        defaultColors.put(key_voipgroup_searchBackground, 0xff303B47);
+        defaultColors.put(key_voipgroup_leaveCallMenu, 0xffFF7575);
+        defaultColors.put(key_voipgroup_scrollUp, 0xff394654);
+        defaultColors.put(key_voipgroup_soundButton, 0x7d2C414D);
+        defaultColors.put(key_voipgroup_soundButtonActive, 0x7d22A4EB);
+        defaultColors.put(key_voipgroup_soundButtonActiveScrolled, 0x8233B4FF);
+        defaultColors.put(key_voipgroup_soundButton2, 0x7d28593A);
+        defaultColors.put(key_voipgroup_soundButtonActive2, 0x7d18B751);
+        defaultColors.put(key_voipgroup_soundButtonActive2Scrolled, 0x8224BF46);
+        defaultColors.put(key_voipgroup_leaveButton, 0x7dF75C5C);
+        defaultColors.put(key_voipgroup_leaveButtonScrolled, 0x82D14D54);
+        defaultColors.put(key_voipgroup_connectingProgress, 0xff28BAFF);
+        defaultColors.put(key_voipgroup_disabledButton, 0xff1C2229);
+        defaultColors.put(key_voipgroup_disabledButtonActive, 0xff2C3A45);
+        defaultColors.put(key_voipgroup_disabledButtonActiveScrolled, 0x8277A1FC);
+        defaultColors.put(key_voipgroup_unmuteButton, 0xff539EF8);
+        defaultColors.put(key_voipgroup_unmuteButton2, 0xff66D4FB);
+        defaultColors.put(key_voipgroup_actionBarUnscrolled, 0xff191F26);
+        defaultColors.put(key_voipgroup_listViewBackgroundUnscrolled, 0xff222A33);
+        defaultColors.put(key_voipgroup_lastSeenTextUnscrolled, 0xff858D94);
+        defaultColors.put(key_voipgroup_mutedIconUnscrolled, 0xff7E868C);
+        defaultColors.put(key_voipgroup_actionBar, 0xff0F1317);
+        defaultColors.put(key_voipgroup_emptyView, 0xff1A1D21);
+        defaultColors.put(key_voipgroup_actionBarItems, 0xffffffff);
+        defaultColors.put(key_voipgroup_actionBarSubtitle, 0xff8A8A8A);
+        defaultColors.put(key_voipgroup_actionBarItemsSelector, 0x1eBADBFF);
+        defaultColors.put(key_voipgroup_mutedByAdminIcon, 0xffFF7070);
+        defaultColors.put(key_voipgroup_mutedIcon, 0xff6F7980);
+        defaultColors.put(key_voipgroup_lastSeenText, 0xff79838A);
+        defaultColors.put(key_voipgroup_nameText, 0xffffffff);
+        defaultColors.put(key_voipgroup_listViewBackground, 0xff1C2229);
+        defaultColors.put(key_voipgroup_dialogBackground, 0xff1C2229);
+        defaultColors.put(key_voipgroup_listeningText, 0xff4DB8FF);
+        defaultColors.put(key_voipgroup_speakingText, 0xff77EE7D);
+        defaultColors.put(key_voipgroup_listSelector, 0x0effffff);
+        defaultColors.put(key_voipgroup_inviteMembersBackground, 0xff222A33);
+        defaultColors.put(key_voipgroup_overlayBlue1, 0xff2BCEFF);
+        defaultColors.put(key_voipgroup_overlayBlue2, 0xff0976E3);
+        defaultColors.put(key_voipgroup_overlayGreen1, 0xff12B522);
+        defaultColors.put(key_voipgroup_overlayGreen2, 0xff00D6C1);
+        defaultColors.put(key_voipgroup_topPanelBlue1, 0xff60C7FB);
+        defaultColors.put(key_voipgroup_topPanelBlue2, 0xff519FF9);
+        defaultColors.put(key_voipgroup_topPanelGreen1, 0xff52CE5D);
+        defaultColors.put(key_voipgroup_topPanelGreen2, 0xff00B1C0);
+        defaultColors.put(key_voipgroup_topPanelGray, 0xff8599aa);
+
+        defaultColors.put(key_voipgroup_overlayAlertGradientMuted, 0xff236D92);
+        defaultColors.put(key_voipgroup_overlayAlertGradientMuted2, 0xff2C4D6B);
+        defaultColors.put(key_voipgroup_overlayAlertGradientUnmuted, 0xff0C8A8C);
+        defaultColors.put(key_voipgroup_overlayAlertGradientUnmuted2, 0xff284C75);
+        defaultColors.put(key_voipgroup_mutedByAdminGradient, 0xff57A4FE);
+        defaultColors.put(key_voipgroup_mutedByAdminGradient2, 0xffF05459);
+        defaultColors.put(key_voipgroup_mutedByAdminGradient3, 0xff766EE9);
+        defaultColors.put(key_voipgroup_overlayAlertMutedByAdmin, 0xff67709E);
+        defaultColors.put(key_voipgroup_overlayAlertMutedByAdmin2, 0xff2F5078);
+        defaultColors.put(key_voipgroup_mutedByAdminMuteButton, 0x7F78A3FF);
+        defaultColors.put(key_voipgroup_mutedByAdminMuteButtonDisabled, 0x3378A3FF);
+
+
 
         fallbackKeys.put(key_chat_inAdminText, key_chat_inTimeText);
         fallbackKeys.put(key_chat_inAdminSelectedText, key_chat_inTimeSelectedText);
@@ -3776,6 +3923,9 @@ public class Theme {
         fallbackKeys.put(key_chat_outAdminText, key_chat_outTimeText);
         fallbackKeys.put(key_chat_outAdminSelectedText, key_chat_outTimeSelectedText);
 
+        fallbackKeys.put(key_returnToCallMutedBackground, key_windowBackgroundWhite);
+        fallbackKeys.put(key_dialogSwipeRemove, key_avatar_backgroundRed);
+
         themeAccentExclusionKeys.addAll(Arrays.asList(keys_avatar_background));
         themeAccentExclusionKeys.addAll(Arrays.asList(keys_avatar_nameInMessage));
         themeAccentExclusionKeys.add(key_chat_attachFileBackground);
@@ -3792,6 +3942,45 @@ public class Theme {
         themeAccentExclusionKeys.add(key_statisticChartLine_lightgreen);
         themeAccentExclusionKeys.add(key_statisticChartLine_orange);
         themeAccentExclusionKeys.add(key_statisticChartLine_indigo);
+
+        themeAccentExclusionKeys.add(key_voipgroup_checkMenu);
+        themeAccentExclusionKeys.add(key_voipgroup_muteButton);
+        themeAccentExclusionKeys.add(key_voipgroup_muteButton2);
+        themeAccentExclusionKeys.add(key_voipgroup_muteButton3);
+        themeAccentExclusionKeys.add(key_voipgroup_searchText);
+        themeAccentExclusionKeys.add(key_voipgroup_searchPlaceholder);
+        themeAccentExclusionKeys.add(key_voipgroup_searchBackground);
+        themeAccentExclusionKeys.add(key_voipgroup_leaveCallMenu);
+        themeAccentExclusionKeys.add(key_voipgroup_scrollUp);
+        themeAccentExclusionKeys.add(key_voipgroup_blueText);
+        themeAccentExclusionKeys.add(key_voipgroup_soundButton);
+        themeAccentExclusionKeys.add(key_voipgroup_soundButtonActive);
+        themeAccentExclusionKeys.add(key_voipgroup_soundButton2);
+        themeAccentExclusionKeys.add(key_voipgroup_soundButtonActive2);
+        themeAccentExclusionKeys.add(key_voipgroup_leaveButton);
+        themeAccentExclusionKeys.add(key_voipgroup_connectingProgress);
+        themeAccentExclusionKeys.add(key_voipgroup_disabledButton);
+        themeAccentExclusionKeys.add(key_voipgroup_unmuteButton);
+        themeAccentExclusionKeys.add(key_voipgroup_unmuteButton2);
+        themeAccentExclusionKeys.add(key_voipgroup_actionBarUnscrolled);
+        themeAccentExclusionKeys.add(key_voipgroup_listViewBackgroundUnscrolled);
+        themeAccentExclusionKeys.add(key_voipgroup_lastSeenTextUnscrolled);
+        themeAccentExclusionKeys.add(key_voipgroup_mutedIconUnscrolled);
+        themeAccentExclusionKeys.add(key_voipgroup_actionBar);
+        themeAccentExclusionKeys.add(key_voipgroup_emptyView);
+        themeAccentExclusionKeys.add(key_voipgroup_actionBarItems);
+        themeAccentExclusionKeys.add(key_voipgroup_actionBarSubtitle);
+        themeAccentExclusionKeys.add(key_voipgroup_actionBarItemsSelector);
+        themeAccentExclusionKeys.add(key_voipgroup_mutedByAdminIcon);
+        themeAccentExclusionKeys.add(key_voipgroup_mutedIcon);
+        themeAccentExclusionKeys.add(key_voipgroup_lastSeenText);
+        themeAccentExclusionKeys.add(key_voipgroup_nameText);
+        themeAccentExclusionKeys.add(key_voipgroup_listViewBackground);
+        themeAccentExclusionKeys.add(key_voipgroup_listeningText);
+        themeAccentExclusionKeys.add(key_voipgroup_speakingText);
+        themeAccentExclusionKeys.add(key_voipgroup_listSelector);
+        themeAccentExclusionKeys.add(key_voipgroup_inviteMembersBackground);
+        themeAccentExclusionKeys.add(key_voipgroup_dialogBackground);
 
         myMessagesColorKeys.add(key_chat_outGreenCall);
         myMessagesColorKeys.add(key_chat_outBubble);
@@ -4745,33 +4934,24 @@ public class Theme {
         }
     }
 
-    public static Drawable createRadSelectorDrawable(int color, int topRad, int bottomRad) {
-        Drawable drawable;
+    public static Drawable createCircleSelectorDrawable(int color, int leftInset, int rightInset) {
         if (Build.VERSION.SDK_INT >= 21) {
             maskPaint.setColor(0xffffffff);
             Drawable maskDrawable = new Drawable() {
 
-                private Path path = new Path();
-                private RectF rect = new RectF();
-                private float[] radii = new float[8];
-
                 @Override
                 public void draw(Canvas canvas) {
-                    radii[0] = radii[1] = radii[2] = radii[3] = AndroidUtilities.dp(topRad);
-                    radii[4] = radii[5] = radii[6] = radii[7] = AndroidUtilities.dp(bottomRad);
-                    rect.set(getBounds());
-                    path.addRoundRect(rect, radii, Path.Direction.CW);
-                    canvas.drawPath(path, maskPaint);
+                    android.graphics.Rect bounds = getBounds();
+                    final int rad = (Math.max(bounds.width(), bounds.height()) / 2) + leftInset + rightInset;
+                    canvas.drawCircle(bounds.centerX() - leftInset + rightInset, bounds.centerY(), rad, maskPaint);
                 }
 
                 @Override
                 public void setAlpha(int alpha) {
-
                 }
 
                 @Override
                 public void setColorFilter(ColorFilter colorFilter) {
-
                 }
 
                 @Override
@@ -4779,6 +4959,85 @@ public class Theme {
                     return PixelFormat.UNKNOWN;
                 }
             };
+            ColorStateList colorStateList = new ColorStateList(
+                    new int[][]{StateSet.WILD_CARD},
+                    new int[]{color}
+            );
+            return new RippleDrawable(colorStateList, null, maskDrawable);
+        } else {
+            StateListDrawable stateListDrawable = new StateListDrawable();
+            stateListDrawable.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(color));
+            stateListDrawable.addState(new int[]{android.R.attr.state_selected}, new ColorDrawable(color));
+            stateListDrawable.addState(StateSet.WILD_CARD, new ColorDrawable(0x00000000));
+            return stateListDrawable;
+        }
+    }
+
+    public static class RippleRadMaskDrawable extends Drawable {
+        private Path path = new Path();
+        private RectF rect = new RectF();
+        private float[] radii = new float[8];
+        private int topRad;
+        private int bottomRad;
+
+        public RippleRadMaskDrawable(int top, int bottom) {
+            topRad = top;
+            bottomRad = bottom;
+        }
+
+        public void setRadius(int top, int bottom) {
+            topRad = top;
+            bottomRad = bottom;
+            invalidateSelf();
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            radii[0] = radii[1] = radii[2] = radii[3] = AndroidUtilities.dp(topRad);
+            radii[4] = radii[5] = radii[6] = radii[7] = AndroidUtilities.dp(bottomRad);
+            rect.set(getBounds());
+            path.addRoundRect(rect, radii, Path.Direction.CW);
+            canvas.drawPath(path, maskPaint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.UNKNOWN;
+        }
+    }
+
+    public static void setMaskDrawableRad(Drawable rippleDrawable, int top, int bottom) {
+        if (Build.VERSION.SDK_INT < 21) {
+            return;
+        }
+        if (rippleDrawable instanceof RippleDrawable) {
+            RippleDrawable drawable = (RippleDrawable) rippleDrawable;
+            int count = drawable.getNumberOfLayers();
+            for (int a = 0; a < count; a++) {
+                Drawable layer = drawable.getDrawable(a);
+                if (layer instanceof RippleRadMaskDrawable) {
+                    drawable.setDrawableByLayerId(android.R.id.mask, new RippleRadMaskDrawable(top, bottom));
+                    break;
+                }
+            }
+        }
+    }
+
+    public static Drawable createRadSelectorDrawable(int color, int topRad, int bottomRad) {
+        Drawable drawable;
+        if (Build.VERSION.SDK_INT >= 21) {
+            maskPaint.setColor(0xffffffff);
+            Drawable maskDrawable = new RippleRadMaskDrawable(topRad, bottomRad);
             ColorStateList colorStateList = new ColorStateList(
                     new int[][]{StateSet.WILD_CARD},
                     new int[]{color}
@@ -5098,6 +5357,7 @@ public class Theme {
                 if (isCurrentThemeNight()) {
                     switchNightThemeDelay = 2000;
                     lastDelayUpdateTime = SystemClock.elapsedRealtime();
+                    AndroidUtilities.runOnUIThread(Theme::checkAutoNightThemeConditions, 2100);
                 }
             }
             currentTheme = themeInfo;
@@ -5641,7 +5901,7 @@ public class Theme {
         }
     }
 
-    private static void applyDayNightThemeMaybe(boolean night) {
+    public static void applyDayNightThemeMaybe(boolean night) {
         if (previousTheme != null) {
             return;
         }
@@ -6495,6 +6755,9 @@ public class Theme {
             dividerPaint = new Paint();
             dividerPaint.setStrokeWidth(1);
 
+            dividerExtraPaint = new Paint();
+            dividerExtraPaint.setStrokeWidth(1);
+
             avatar_backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
             checkboxSquare_checkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -6549,7 +6812,16 @@ public class Theme {
             dialogs_pinArchiveDrawable = new RLottieDrawable(R.raw.chats_hide, "chats_hide", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
             dialogs_unpinArchiveDrawable = new RLottieDrawable(R.raw.chats_unhide, "chats_unhide", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
             dialogs_hidePsaDrawable = new RLottieDrawable(R.raw.chat_audio_record_delete, "chats_psahide", AndroidUtilities.dp(30), AndroidUtilities.dp(30));
-            
+
+            dialogs_swipeMuteDrawable = new RLottieDrawable(R.raw.swipe_mute, "swipe_mute", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+            dialogs_swipeUnmuteDrawable = new RLottieDrawable(R.raw.swipe_unmute, "swipe_unmute", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+
+            dialogs_swipeReadDrawable = new RLottieDrawable(R.raw.swipe_read, "swipe_read", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+            dialogs_swipeUnreadDrawable = new RLottieDrawable(R.raw.swipe_unread, "swipe_unread", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+            dialogs_swipeDeleteDrawable = new RLottieDrawable(R.raw.swipe_delete, "swipe_delete", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+            dialogs_swipeUnpinDrawable = new RLottieDrawable(R.raw.swipe_unpin, "swipe_unpin", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+            dialogs_swipePinDrawable = new RLottieDrawable(R.raw.swipe_pin, "swipe_pin", AndroidUtilities.dp(36), AndroidUtilities.dp(36));
+
             applyCommonTheme();
         }
     }
@@ -6636,6 +6908,8 @@ public class Theme {
             dialogs_countTextPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             dialogs_archiveTextPaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
             dialogs_archiveTextPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+            dialogs_archiveTextPaintSmall = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
+            dialogs_archiveTextPaintSmall.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             dialogs_onlinePaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
             dialogs_offlinePaint = new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
 
@@ -6658,9 +6932,10 @@ public class Theme {
             dialogs_groupDrawable = resources.getDrawable(R.drawable.list_group);
             dialogs_broadcastDrawable = resources.getDrawable(R.drawable.list_broadcast);
             dialogs_muteDrawable = resources.getDrawable(R.drawable.list_mute).mutate();
-            dialogs_verifiedDrawable = resources.getDrawable(R.drawable.verified_area);
-            dialogs_scamDrawable = new ScamDrawable(11);
-            dialogs_verifiedCheckDrawable = resources.getDrawable(R.drawable.verified_check);
+            dialogs_verifiedDrawable = resources.getDrawable(R.drawable.verified_area).mutate();
+            dialogs_scamDrawable = new ScamDrawable(11, 0);
+            dialogs_fakeDrawable = new ScamDrawable(11, 1);
+            dialogs_verifiedCheckDrawable = resources.getDrawable(R.drawable.verified_check).mutate();
             dialogs_mentionDrawable = resources.getDrawable(R.drawable.mentionchatslist);
             dialogs_botDrawable = resources.getDrawable(R.drawable.list_bot);
             dialogs_pinnedDrawable = resources.getDrawable(R.drawable.list_pin);
@@ -6673,6 +6948,7 @@ public class Theme {
         dialogs_timePaint.setTextSize(AndroidUtilities.dp(13));
         dialogs_countTextPaint.setTextSize(AndroidUtilities.dp(13));
         dialogs_archiveTextPaint.setTextSize(AndroidUtilities.dp(13));
+        dialogs_archiveTextPaintSmall.setTextSize(AndroidUtilities.dp(11));
         dialogs_onlinePaint.setTextSize(AndroidUtilities.dp(15));
         dialogs_offlinePaint.setTextSize(AndroidUtilities.dp(15));
         dialogs_searchNamePaint.setTextSize(AndroidUtilities.dp(16));
@@ -6697,6 +6973,7 @@ public class Theme {
         dialogs_timePaint.setColor(getColor(key_chats_date));
         dialogs_countTextPaint.setColor(getColor(key_chats_unreadCounterText));
         dialogs_archiveTextPaint.setColor(getColor(key_chats_archiveText));
+        dialogs_archiveTextPaintSmall.setColor(getColor(key_chats_archiveText));
         dialogs_countPaint.setColor(getColor(key_chats_unreadCounter));
         dialogs_countGrayPaint.setColor(getColor(key_chats_unreadCounterMuted));
         dialogs_actionMessagePaint.setColor(getColor(key_chats_actionMessage));
@@ -6721,6 +6998,7 @@ public class Theme {
         setDrawableColorByKey(dialogs_verifiedCheckDrawable, key_chats_verifiedCheck);
         setDrawableColorByKey(dialogs_holidayDrawable, key_actionBarDefaultTitle);
         setDrawableColorByKey(dialogs_scamDrawable, key_chats_draft);
+        setDrawableColorByKey(dialogs_fakeDrawable, key_chats_draft);
     }
 
     public static void destroyResources() {
@@ -6926,6 +7204,7 @@ public class Theme {
 
             chat_botLinkDrawalbe = resources.getDrawable(R.drawable.bot_link);
             chat_botInlineDrawable = resources.getDrawable(R.drawable.bot_lines);
+            chat_botCardDrawalbe = resources.getDrawable(R.drawable.bot_card);
 
             chat_commentDrawable = resources.getDrawable(R.drawable.msg_msgbubble);
             chat_commentStickerDrawable = resources.getDrawable(R.drawable.msg_msgbubble2);
@@ -8176,5 +8455,14 @@ public class Theme {
         statusDrawable.start();
         statusDrawable.setColor(getColor(key_chats_actionMessage));
         return statusDrawable;
+    }
+
+    private static FragmentContextViewWavesDrawable fragmentContextViewWavesDrawable;
+
+    public static FragmentContextViewWavesDrawable getFragmentContextViewWavesDrawable() {
+        if (fragmentContextViewWavesDrawable == null) {
+            fragmentContextViewWavesDrawable = new FragmentContextViewWavesDrawable();
+        }
+        return fragmentContextViewWavesDrawable;
     }
 }

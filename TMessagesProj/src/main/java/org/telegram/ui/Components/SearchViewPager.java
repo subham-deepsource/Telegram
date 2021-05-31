@@ -7,6 +7,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -40,7 +41,6 @@ import org.telegram.ui.Cells.SharedPhotoVideoCell;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.FilteredSearchView;
-import org.telegram.ui.ViewPagerFixed;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +55,8 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     public StickerEmptyView emptyView;
     public DialogsSearchAdapter dialogsSearchAdapter;
     private LinearLayoutManager searchlayoutManager;
+    private RecyclerItemsEnterAnimator itemsEnterAnimator;
+    private boolean attached;
 
     private NumberTextView selectedMessagesCountTextView;
     private boolean isActionModeShowed;
@@ -85,8 +87,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     ChatPreviewDelegate chatPreviewDelegate;
 
     private final int folderId;
-
-    ArrayList<SearchResultsEnterAnimator> currentAnimators = new ArrayList<>();
+    int animateFromCount = 0;
 
     public SearchViewPager(Context context, BaseFragment fragment, int type, int initialDialogsType, int folderId, ChatPreviewDelegate chatPreviewDelegate) {
         super(context);
@@ -96,10 +97,14 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         dialogsSearchAdapter = new DialogsSearchAdapter(context, type, initialDialogsType, folderId) {
             @Override
             public void notifyDataSetChanged() {
+                int itemCount = getCurrentItemCount();
                 super.notifyDataSetChanged();
                 if (!lastSearchScrolledToTop && searchListView != null) {
                     searchListView.scrollToPosition(0);
                     lastSearchScrolledToTop = true;
+                }
+                if (getItemCount() == 0 && itemCount != 0 && !isSearching()) {
+                    emptyView.showProgress(false, false);
                 }
             }
         };
@@ -107,22 +112,14 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         searchListView = new RecyclerListView(context) {
             @Override
             protected void dispatchDraw(Canvas canvas) {
-                int n = getChildCount();
-                loop: for (int i = 0; i < n; i++) {
-                    View v = getChildAt(i);
-                    ViewHolder holder = searchListView.getChildViewHolder(v);
-                    if (holder == null || holder.shouldIgnore()) {
-                        continue;
-                    }
-                    int position = searchlayoutManager.getPosition(v);
-                    for (int k = 0; k < currentAnimators.size(); k++) {
-                        if (currentAnimators.get(k).setup(v, position)) {
-                            continue loop;
-                        }
-                    }
-                    v.setAlpha(1f);
-                }
+                itemsEnterAnimator.dispatchDraw();
                 super.dispatchDraw(canvas);
+            }
+
+            @Override
+            protected void onDetachedFromWindow() {
+                super.onDetachedFromWindow();
+                itemsEnterAnimator.onDetached();
             }
         };
         searchListView.setPivotY(0);
@@ -162,7 +159,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
 
         FlickerLoadingView loadingView = new FlickerLoadingView(context);
         loadingView.setViewType(1);
-        emptyView = new StickerEmptyView(context, loadingView) {
+        emptyView = new StickerEmptyView(context, loadingView, StickerEmptyView.STICKER_TYPE_SEARCH) {
             @Override
             public void setVisibility(int visibility) {
                 if (noMediaFiltersSearchView.getTag() != null) {
@@ -180,6 +177,8 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
 
         searchContainer.addView(emptyView);
         searchListView.setEmptyView(emptyView);
+
+        itemsEnterAnimator = new RecyclerItemsEnterAnimator(searchListView);
 
         setAdapter(new ViewPagerFixed.Adapter() {
 
@@ -227,7 +226,11 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     public void onTextChanged(String text) {
         lastSearchString = text;
         View view = getCurrentView();
-        search(view, getCurrentPosition(), text, false);
+        boolean reset = false;
+        if (!attached) {
+            reset = true;
+        }
+        search(view, getCurrentPosition(), text, reset);
     }
 
     private void search(View view, int position, String query, boolean reset) {
@@ -258,6 +261,10 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
                 if (reset) {
                     emptyView.showProgress(!dialogsSearchAdapter.isSearching(), false);
                     emptyView.showProgress(dialogsSearchAdapter.isSearching(), false);
+                } else {
+                    if (!dialogsSearchAdapter.hasRecentSearch()) {
+                        emptyView.showProgress(dialogsSearchAdapter.isSearching(), true);
+                    }
                 }
                 if (reset) {
                     noMediaFiltersSearchView.setVisibility(View.GONE);
@@ -334,8 +341,8 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
             actionMode.addView(selectedMessagesCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 72, 0, 0, 0));
             selectedMessagesCountTextView.setOnTouchListener((v, event) -> true);
 
-            gotoItem = actionMode.addItemWithWidth(gotoItemId, R.drawable.msg_message, AndroidUtilities.dp(54));
-            forwardItem = actionMode.addItemWithWidth(forwardItemId, R.drawable.msg_forward, AndroidUtilities.dp(54));
+            gotoItem = actionMode.addItemWithWidth(gotoItemId, R.drawable.msg_message, AndroidUtilities.dp(54), LocaleController.getString("AccDescrGoToMessage", R.string.AccDescrGoToMessage));
+            forwardItem = actionMode.addItemWithWidth(forwardItemId, R.drawable.msg_forward, AndroidUtilities.dp(54), LocaleController.getString("Forward", R.string.Forward));
         }
         if (parent.getActionBar().getBackButton().getDrawable() instanceof MenuDrawable) {
             parent.getActionBar().setBackButtonDrawable(new BackDrawable(false));
@@ -605,6 +612,15 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         viewsByType.clear();
     }
 
+    public void setPosition(int position) {
+        super.setPosition(position);
+        viewsByType.clear();
+        if (tabsView != null) {
+            tabsView.selectTabWithId(position, 1f);
+        }
+        invalidate();
+    }
+
     public void setKeyboardHeight(int keyboardSize) {
         this.keyboardSize = keyboardSize;
         boolean animated = getVisibility() == View.VISIBLE && getAlpha() > 0;
@@ -667,101 +683,31 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     }
 
     public void runResultsEnterAnimation() {
-        Set<Integer> hasSet = new HashSet<>();
-        int n =  searchListView.getChildCount();
-        View progressView = null;
-        for (int i = 0; i < n; i++) {
-            View child = searchListView.getChildAt(i);
-            int childPosition = searchlayoutManager.getPosition(child);
-            if (child instanceof FlickerLoadingView) {
-                progressView = child;
-            } else {
-                hasSet.add(childPosition);
-            }
-        }
-        final View finalProgressView = progressView;
-        if (progressView != null) {
-            searchListView.removeView(progressView);
-        }
+        itemsEnterAnimator.showItemsAnimated(animateFromCount);
+        animateFromCount = dialogsSearchAdapter.getItemCount();
+    }
 
-        searchListView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                searchListView.getViewTreeObserver().removeOnPreDrawListener(this);
-                int n =  searchListView.getChildCount();
-                for (int i = 0; i < n; i++) {
-                    View child = searchListView.getChildAt(i);
-                    int position = searchlayoutManager.getPosition(child);
-                    if (!hasSet.contains(position)) {
-                        SearchResultsEnterAnimator animator = new SearchResultsEnterAnimator();
-                        child.setAlpha(0);
-                        int s = Math.min(searchListView.getMeasuredHeight(), Math.max(0, child.getTop()));
-                        int delay = (int) ((s / (float) searchListView.getMeasuredHeight()) * 100);
-                        animator.position = position;
-                        animator.valueAnimator.setStartDelay(delay);
-                        animator.valueAnimator.setDuration(200);
-                        animator.valueAnimator.start();
-                    }
-                }
-                if (finalProgressView != null && finalProgressView.getParent() == null) {
-                    searchListView.addView(finalProgressView);
-                    RecyclerView.LayoutManager layoutManager = searchListView.getLayoutManager();
-                    if (layoutManager != null) {
-                        layoutManager.ignoreView(finalProgressView);
-                        Animator animator = ObjectAnimator.ofFloat(finalProgressView, ALPHA, finalProgressView.getAlpha(), 0);
-                        animator.addListener(new AnimatorListenerAdapter() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                finalProgressView.setAlpha(1f);
-                                layoutManager.stopIgnoringView(finalProgressView);
-                                searchListView.removeView(finalProgressView);
-                            }
-                        });
-                        animator.start();
-                    }
-                }
-                return true;
-            }
-        });
+
+    public TabsView getTabsView() {
+        return tabsView;
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        attached = true;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        attached = false;
     }
 
     public void cancelEnterAnimation() {
-        for (int i = 0; i < currentAnimators.size(); i++) {
-            SearchResultsEnterAnimator animator = currentAnimators.get(i);
-            animator.valueAnimator.cancel();
-            currentAnimators.remove(animator);
-            i--;
-        }
-    }
-
-
-    private class SearchResultsEnterAnimator {
-        final ValueAnimator valueAnimator;
-        float progress;
-        int position;
-
-        private SearchResultsEnterAnimator() {
-            valueAnimator = ValueAnimator.ofFloat(0, 1f);
-            valueAnimator.addUpdateListener(valueAnimator -> {
-                progress = (float) valueAnimator.getAnimatedValue();
-                searchListView.invalidate();
-            });
-            valueAnimator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    currentAnimators.remove(SearchResultsEnterAnimator.this);
-                }
-            });
-            currentAnimators.add(this);
-        }
-
-        public boolean setup(View view, int position) {
-            if (this.position == position) {
-                view.setAlpha(progress);
-                return true;
-            }
-            return false;
-        }
+        itemsEnterAnimator.cancel();
+        searchListView.invalidate();
+        animateFromCount = 0;
     }
 
     public interface ChatPreviewDelegate {

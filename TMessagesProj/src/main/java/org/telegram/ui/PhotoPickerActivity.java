@@ -1053,7 +1053,7 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                             sendPopupWindow.dismiss();
                         }
                     });
-                    sendPopupLayout.setShowedFromBotton(false);
+                    sendPopupLayout.setShownFromBotton(false);
 
                     itemCells = new ActionBarMenuSubItem[2];
                     for (int a = 0; a < 2; a++) {
@@ -1061,7 +1061,7 @@ public class PhotoPickerActivity extends BaseFragment implements NotificationCen
                             continue;
                         }
                         int num = a;
-                        itemCells[a] = new ActionBarMenuSubItem(getParentActivity());
+                        itemCells[a] = new ActionBarMenuSubItem(getParentActivity(), a == 0, a == 1);
                         if (num == 0) {
                             if (UserObject.isUserSelf(user)) {
                                 itemCells[a].setTextAndIcon(LocaleController.getString("SetReminder", R.string.SetReminder), R.drawable.msg_schedule);

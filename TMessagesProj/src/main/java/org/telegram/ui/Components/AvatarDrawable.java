@@ -24,6 +24,7 @@ import androidx.core.graphics.ColorUtils;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.UserObject;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
 
@@ -136,6 +137,14 @@ public class AvatarDrawable extends Drawable {
         if (user != null) {
             setInfo(user.id, user.first_name, user.last_name, null);
             drawDeleted = UserObject.isDeleted(user);
+        }
+    }
+
+    public void setInfo(TLObject object) {
+        if (object instanceof TLRPC.User) {
+            setInfo((TLRPC.User) object);
+        } else if (object instanceof TLRPC.Chat) {
+            setInfo((TLRPC.Chat) object);
         }
     }
 
@@ -361,7 +370,7 @@ public class AvatarDrawable extends Drawable {
         } else if (drawDeleted && Theme.avatarDrawables[1] != null) {
             int w = Theme.avatarDrawables[1].getIntrinsicWidth();
             int h = Theme.avatarDrawables[1].getIntrinsicHeight();
-            if (w > size || h > size) {
+            if (w > size - AndroidUtilities.dp(6) || h > size - AndroidUtilities.dp(6)) {
                 float scale = size / (float) AndroidUtilities.dp(50);
                 w *= scale;
                 h *= scale;
