@@ -505,8 +505,8 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                         args.putInt("enc_id", high_id);
                     }
                     args.putInt("message_id", selectedFiles[0].keyAt(0));
-                    NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.closeChats);
-                    presentFragment(new ChatActivity(args), true);
+                    args.putBoolean("need_remove_previous_same_chat_activity", false);
+                    presentFragment(new ChatActivity(args), false);
                 }
             }
         });
@@ -786,7 +786,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                 if (parentLayout != null) {
                     parentLayout.drawHeaderShadow(canvas, actionBar.getMeasuredHeight() + (int) actionBar.getTranslationY());
                 }
-                if (fragmentContextView != null && fragmentContextView.getCurrentStyle() == 3) {
+                if (fragmentContextView != null && fragmentContextView.isCallStyle()) {
                     canvas.save();
                     canvas.translate(fragmentContextView.getX(), fragmentContextView.getY());
                     fragmentContextView.setDrawOverlay(true);
@@ -798,7 +798,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
 
             @Override
             protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-                if (child == fragmentContextView && fragmentContextView.getCurrentStyle() == 3) {
+                if (child == fragmentContextView && fragmentContextView.isCallStyle()) {
                     return true;
                 }
                 return super.drawChild(canvas, child, drawingTime);
@@ -1875,7 +1875,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
             ((SharedAudioCell) view).setChecked(true, true);
         }
         if (!actionBar.isActionModeShowed()) {
-            actionBar.showActionMode(null, actionModeBackground, null, null, null, 0);
+            actionBar.showActionMode(true, null, actionModeBackground, null, null, null, 0);
             resetScroll();
         }
         return true;
@@ -1949,10 +1949,10 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                     } else if (!cell.isLoading()) {
                         MessageObject messageObject = cell.getMessage();
                         FileLoader.getInstance(currentAccount).loadFile(document, messageObject, 0, 0);
-                        cell.updateFileExistIcon();
+                        cell.updateFileExistIcon(true);
                     } else {
                         FileLoader.getInstance(currentAccount).cancelLoadFile(document);
-                        cell.updateFileExistIcon();
+                        cell.updateFileExistIcon(true);
                     }
                 }
             } else if (selectedMode == 3) {
@@ -2130,7 +2130,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                 view = new GraySectionCell(mContext);
                 view.setBackgroundColor(Theme.getColor(Theme.key_graySection) & 0xf2ffffff);
             }
-            if (sharedMediaData[3].sections.size() == 0 && !sharedMediaData[3].loading) {
+            if (sharedMediaData[3].sections.size() == 0) {
                 view.setAlpha(0);
             } else if (section < sharedMediaData[3].sections.size()) {
                 view.setAlpha(1f);
@@ -2262,7 +2262,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                 view = new GraySectionCell(mContext);
                 view.setBackgroundColor(Theme.getColor(Theme.key_graySection) & 0xf2ffffff);
             }
-            if (sharedMediaData[currentType].sections.size() == 0 && !sharedMediaData[currentType].loading) {
+            if (sharedMediaData[currentType].sections.size() == 0) {
                 view.setAlpha(0);
             } else if (section < sharedMediaData[currentType].sections.size()) {
                 view.setAlpha(1f);
@@ -2433,7 +2433,7 @@ public class MediaActivity extends BaseFragment implements NotificationCenter.No
                 view = new SharedMediaSectionCell(mContext);
                 view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite) & 0xe5ffffff);
             }
-            if (sharedMediaData[0].sections.size() == 0 && !sharedMediaData[0].loading) {
+            if (sharedMediaData[0].sections.size() == 0) {
                 view.setAlpha(0);
             } else if (section < sharedMediaData[0].sections.size()) {
                 view.setAlpha(1f);

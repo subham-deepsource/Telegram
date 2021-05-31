@@ -21,7 +21,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.text.Editable;
-import android.text.InputFilter;
 import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -138,7 +137,7 @@ public class PhotoViewerCaptionEnterView extends FrameLayout implements Notifica
         emojiButton.setAlpha(0.58f);
         frameLayout.addView(emojiButton, LayoutHelper.createFrame(48, 48, Gravity.BOTTOM | Gravity.LEFT));
         emojiButton.setOnClickListener(view -> {
-            if (keyboardVisible) {
+            if (keyboardVisible || (AndroidUtilities.isInMultiwindow || AndroidUtilities.usingHardwareInput) && !isPopupShowing()) {
                 showPopup(1, false);
             } else {
                 openKeyboardInternal();
@@ -201,6 +200,7 @@ public class PhotoViewerCaptionEnterView extends FrameLayout implements Notifica
         messageEditText.setWindowView(windowView);
         messageEditText.setHint(LocaleController.getString("AddCaption", R.string.AddCaption));
         messageEditText.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        messageEditText.setLinkTextColor(0xff76c2f1);
         messageEditText.setInputType(messageEditText.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         messageEditText.setMaxLines(4);
         messageEditText.setHorizontallyScrolling(false);
@@ -229,7 +229,7 @@ public class PhotoViewerCaptionEnterView extends FrameLayout implements Notifica
         });
         messageEditText.setOnClickListener(view -> {
             if (isPopupShowing()) {
-                showPopup(AndroidUtilities.usingHardwareInput ? 0 : 2, false);
+                showPopup(AndroidUtilities.isInMultiwindow || AndroidUtilities.usingHardwareInput ? 0 : 2, false);
             }
         });
         messageEditText.addTextChangedListener(new TextWatcher() {
@@ -712,7 +712,7 @@ public class PhotoViewerCaptionEnterView extends FrameLayout implements Notifica
     }
 
     private void openKeyboardInternal() {
-        showPopup(AndroidUtilities.usingHardwareInput ? 0 : 2, false);
+        showPopup(AndroidUtilities.isInMultiwindow || AndroidUtilities.usingHardwareInput ? 0 : 2, false);
         openKeyboard();
     }
 
@@ -752,7 +752,7 @@ public class PhotoViewerCaptionEnterView extends FrameLayout implements Notifica
     }
 
     public boolean isKeyboardVisible() {
-        return AndroidUtilities.usingHardwareInput && getTag() != null || keyboardVisible;
+        return (AndroidUtilities.usingHardwareInput || AndroidUtilities.isInMultiwindow) && getTag() != null || keyboardVisible;
     }
 
     @Override

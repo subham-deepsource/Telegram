@@ -119,7 +119,17 @@ public class SvgHelper {
         private int currentColor;
         private String currentColorKey;
         private float colorAlpha;
-        private float crossfadeAlpha;
+        private float crossfadeAlpha = 1.0f;
+
+        @Override
+        public int getIntrinsicHeight() {
+            return width;
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return height;
+        }
 
         @Override
         public void draw(Canvas canvas) {
@@ -250,7 +260,11 @@ public class SvgHelper {
                 placeholderMatrix = new Matrix();
                 placeholderGradient.setLocalMatrix(placeholderMatrix);
                 for (Paint paint : paints.values()) {
-                    paint.setShader(new ComposeShader(placeholderGradient, backgroundGradient, PorterDuff.Mode.ADD));
+                    if (Build.VERSION.SDK_INT <= 22) {
+                        paint.setShader(backgroundGradient);
+                    } else {
+                        paint.setShader(new ComposeShader(placeholderGradient, backgroundGradient, PorterDuff.Mode.ADD));
+                    }
                 }
             }
         }
@@ -1090,7 +1104,11 @@ public class SvgHelper {
                     Properties props = new Properties(atts, globalStyles);
                     if (doFill(props)) {
                         if (drawable != null) {
-                            drawable.addCommand(new RoundRect(new RectF(x, y, x + width, y + height), rx), paint);
+                            if (rx != null) {
+                                drawable.addCommand(new RoundRect(new RectF(x, y, x + width, y + height), rx), paint);
+                            } else {
+                                drawable.addCommand(new RectF(x, y, x + width, y + height), paint);
+                            }
                         } else {
                             if (rx != null) {
                                 rectTmp.set(x, y, x + width, y + height);
@@ -1102,7 +1120,11 @@ public class SvgHelper {
                     }
                     if (doStroke(props)) {
                         if (drawable != null) {
-                            drawable.addCommand(new RoundRect(new RectF(x, y, x + width, y + height), rx), paint);
+                            if (rx != null) {
+                                drawable.addCommand(new RoundRect(new RectF(x, y, x + width, y + height), rx), paint);
+                            } else {
+                                drawable.addCommand(new RectF(x, y, x + width, y + height), paint);
+                            }
                         } else {
                             if (rx != null) {
                                 rectTmp.set(x, y, x + width, y + height);
